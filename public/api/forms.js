@@ -227,21 +227,69 @@ window.StokeFlowAPI = {
     return new Promise((resolve, reject) => {
       try {
         // Log submission
-        console.log('Form submitted:', { formId, formData });
-        
-        // Here you would typically send to your backend
-        // For now, we'll simulate success
+        console.log('📝 Form submitted:', { formId, formData });
+
+        // Save to StokeFlow leads database
+        this.saveToLeadsDatabase(formId, formData);
+
+        // Simulate API success
         setTimeout(() => {
           resolve({
             success: true,
             message: 'Form submitted successfully'
           });
         }, 500);
-        
+
       } catch (error) {
         reject(error);
       }
     });
+  },
+
+  // Save lead to StokeFlow leads database
+  saveToLeadsDatabase: function(formId, formData) {
+    try {
+      // Get current leads from localStorage
+      const leadsStorage = localStorage.getItem('leads-storage');
+      let leadsStore = leadsStorage ? JSON.parse(leadsStorage) : { state: { leads: [] } };
+
+      // Ensure structure exists
+      if (!leadsStore.state) leadsStore.state = {};
+      if (!leadsStore.state.leads) leadsStore.state.leads = [];
+
+      // Create new lead
+      const newLead = {
+        id: this.generateId(),
+        formId: formId,
+        formName: this.getFormName(formId),
+        submittedAt: new Date().toISOString(),
+        data: formData
+      };
+
+      // Add to leads array
+      leadsStore.state.leads.unshift(newLead);
+
+      // Save back to localStorage
+      localStorage.setItem('leads-storage', JSON.stringify(leadsStore));
+
+      console.log('✅ Lead saved to StokeFlow database:', newLead);
+
+      return newLead;
+
+    } catch (error) {
+      console.error('❌ Error saving lead to database:', error);
+    }
+  },
+
+  // Get form name for lead
+  getFormName: function(formId) {
+    const form = this.getForm(formId);
+    return form ? form.name : 'Contact Form';
+  },
+
+  // Generate unique ID
+  generateId: function() {
+    return 'lead_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
   }
 };
 

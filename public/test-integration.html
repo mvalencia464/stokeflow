@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StokeFlow Integration Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .success {
+            background: #10b981;
+        }
+        .error {
+            background: #ef4444;
+        }
+        .log {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .status.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 StokeFlow Integration Test</h1>
+        <p>Test your HighLevel integration and lead storage</p>
+        
+        <div class="form-group">
+            <label>HighLevel Private Integration Token:</label>
+            <input type="password" id="hlToken" placeholder="Enter your HighLevel token">
+        </div>
+        
+        <div class="form-group">
+            <label>HighLevel Location ID:</label>
+            <input type="text" id="hlLocationId" placeholder="Enter your location ID">
+        </div>
+        
+        <button onclick="testHighLevelConnection()">Test HighLevel Connection</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div class="container">
+        <h2>📝 Test Form Submission</h2>
+        <div id="test-form"></div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Test Results</h2>
+        <div id="status"></div>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script src="https://stokeflow.netlify.app/stokeflow-widget.js"></script>
+    <script>
+        let logContent = '';
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logContent += `[${timestamp}] ${message}\n`;
+            document.getElementById('log').textContent = logContent;
+            console.log(message);
+        }
+
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function clearLog() {
+            logContent = '';
+            document.getElementById('log').textContent = '';
+            document.getElementById('status').innerHTML = '';
+        }
+
+        async function testHighLevelConnection() {
+            const token = document.getElementById('hlToken').value;
+            const locationId = document.getElementById('hlLocationId').value;
+
+            if (!token || !locationId) {
+                showStatus('Please enter both HighLevel token and location ID', 'error');
+                return;
+            }
+
+            log('🔄 Testing HighLevel connection...');
+
+            try {
+                const response = await fetch('https://services.leadconnectorhq.com/contacts/', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                log(`📡 API Response Status: ${response.status}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ HighLevel connection successful!');
+                    log(`📋 Response: ${JSON.stringify(data, null, 2)}`);
+                    showStatus('✅ HighLevel connection successful!', 'success');
+                    
+                    // Store credentials for form test
+                    window.STOKEFLOW_HIGHLEVEL_TOKEN = token;
+                    window.STOKEFLOW_HIGHLEVEL_LOCATION_ID = locationId;
+                    
+                    // Create test form
+                    createTestForm();
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ HighLevel connection failed: ${response.status}`);
+                    log(`📋 Error: ${errorText}`);
+                    showStatus(`❌ HighLevel connection failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Connection error: ${error.message}`);
+                showStatus(`❌ Connection error: ${error.message}`, 'error');
+            }
+        }
+
+        function createTestForm() {
+            log('📝 Creating test form...');
+            
+            StokeFlow.ready(function() {
+                const widget = StokeFlow.create({
+                    formId: 'test-integration',
+                    containerId: 'test-form',
+                    
+                    formData: {
+                        id: 'test-integration',
+                        name: 'Integration Test Form',
+                        description: 'Test form for HighLevel integration',
+                        steps: [{
+                            id: 'step1',
+                            title: 'Test Contact Information',
+                            questions: [
+                                {
+                                    id: 'name',
+                                    type: 'text',
+                                    title: 'Full Name',
+                                    required: true,
+                                    placeholder: 'John Doe'
+                                },
+                                {
+                                    id: 'email',
+                                    type: 'text',
+                                    title: 'Email Address',
+                                    required: true,
+                                    placeholder: 'john@example.com'
+                                },
+                                {
+                                    id: 'phone',
+                                    type: 'text',
+                                    title: 'Phone Number',
+                                    required: false,
+                                    placeholder: '+1 (555) 123-4567'
+                                }
+                            ]
+                        }],
+                        settings: {
+                            primaryColor: '#10b981',
+                            showProgressBar: false,
+                            thankYouMessage: 'Test submission successful!'
+                        }
+                    },
+                    
+                    onSubmit: function(data) {
+                        log('📝 Form submitted with data:');
+                        log(JSON.stringify(data, null, 2));
+                        
+                        // Check if lead was saved to StokeFlow
+                        setTimeout(() => {
+                            checkLeadStorage();
+                        }, 1000);
+                    }
+                });
+                
+                log('✅ Test form created successfully');
+            });
+        }
+
+        function checkLeadStorage() {
+            try {
+                const leadsStorage = localStorage.getItem('leads-storage');
+                if (leadsStorage) {
+                    const leadsStore = JSON.parse(leadsStorage);
+                    const leads = leadsStore.state?.leads || [];
+                    log(`📊 Found ${leads.length} leads in StokeFlow database`);
+                    
+                    if (leads.length > 0) {
+                        log('📋 Latest lead:');
+                        log(JSON.stringify(leads[0], null, 2));
+                        showStatus('✅ Lead saved to StokeFlow database!', 'success');
+                    }
+                } else {
+                    log('❌ No leads found in StokeFlow database');
+                    showStatus('❌ No leads found in StokeFlow database', 'error');
+                }
+            } catch (error) {
+                log(`❌ Error checking lead storage: ${error.message}`);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Integration test page loaded');
+            log('📋 Instructions:');
+            log('1. Enter your HighLevel credentials');
+            log('2. Click "Test HighLevel Connection"');
+            log('3. Fill out and submit the test form');
+            log('4. Check the results below');
+        });
+    </script>
+</body>
+</html>

@@ -463,8 +463,8 @@
           return;
         }
 
-        // Submit to HighLevel
-        const response = await fetch('https://rest.gohighlevel.com/v1/contacts/', {
+        // Submit to HighLevel (using v2 API for Private Integration tokens)
+        const response = await fetch('https://services.leadconnectorhq.com/contacts/', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${hlToken}`,
@@ -477,10 +477,14 @@
           })
         });
 
+        console.log('HighLevel API Response Status:', response.status);
+
         if (response.ok) {
-          console.log('Successfully synced to HighLevel');
+          const result = await response.json();
+          console.log('✅ Successfully synced to HighLevel:', result);
         } else {
-          console.error('HighLevel sync failed:', response.statusText);
+          const errorText = await response.text();
+          console.error('❌ HighLevel sync failed:', response.status, errorText);
         }
 
       } catch (error) {
@@ -510,37 +514,60 @@
 
       // Map common fields
       Object.entries(this.formData).forEach(([key, value]) => {
+        if (!value) return; // Skip empty values
+
         switch (key.toLowerCase()) {
           case 'name':
           case 'fullname':
           case 'full_name':
-            data.name = value;
+            // Split full name into first and last
+            const nameParts = String(value).trim().split(' ');
+            data.firstName = nameParts[0] || 'Unknown';
+            data.lastName = nameParts.slice(1).join(' ') || 'User';
             break;
           case 'firstname':
           case 'first_name':
-            data.firstName = value;
+            data.firstName = String(value).trim();
             break;
           case 'lastname':
           case 'last_name':
-            data.lastName = value;
+            data.lastName = String(value).trim();
             break;
           case 'email':
-            data.email = value;
+            data.email = String(value).trim();
             break;
           case 'phone':
           case 'phonenumber':
           case 'phone_number':
-            data.phone = value;
+            data.phone = String(value).trim();
             break;
           default:
             // Add as custom field
             data.customFields.push({
-              key: key,
-              field_value: value
+              key: key.toLowerCase().replace(/\s+/g, '_'),
+              field_value: String(value)
             });
         }
       });
 
+      // Ensure we have at least basic names
+      if (!data.firstName && !data.lastName) {
+        data.firstName = 'Unknown';
+        data.lastName = 'User';
+      }
+
+      // Add form submission metadata
+      data.customFields.push({
+        key: 'form_submission_date',
+        field_value: new Date().toISOString()
+      });
+
+      data.customFields.push({
+        key: 'form_id',
+        field_value: this.formId
+      });
+
+      console.log('📋 Prepared HighLevel contact data:', data);
       return data;
     }
 
