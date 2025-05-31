@@ -271,15 +271,29 @@ function getHardcodedForm(formId) {
   if (callback && formId) {
     console.log('📋 Form data API called with:', { callback, formId });
 
-    // This allows JSONP-style calls like:
-    // https://stokeflow.netlify.app/api/form-data.js?callback=myCallback&formId=123
-    const callbackFunction = window[callback];
-    if (typeof callbackFunction === 'function') {
-      console.log('📋 Executing callback function');
-      window.StokeFlowFormData(callbackFunction, formId);
-    } else {
-      console.log('📋 Callback function not found:', callback);
-    }
+    // Try multiple times to find the callback function
+    let attempts = 0;
+    const maxAttempts = 20; // Try for up to 2 seconds
+
+    const tryCallback = () => {
+      attempts++;
+      const callbackFunction = window[callback];
+
+      if (typeof callbackFunction === 'function') {
+        console.log('📋 Executing callback function (attempt', attempts, ')');
+        window.StokeFlowFormData(callbackFunction, formId);
+      } else if (attempts < maxAttempts) {
+        console.log('📋 Callback function not found, retrying... (attempt', attempts, ')');
+        setTimeout(tryCallback, 100);
+      } else {
+        console.log('📋 Callback function not found after', maxAttempts, 'attempts:', callback);
+        console.log('📋 Available window functions:', Object.keys(window).filter(k => k.includes('stokeFlow') || k.includes('Callback')));
+      }
+    };
+
+    // Start trying immediately
+    tryCallback();
+
   } else {
     console.log('📋 Form data API loaded but no callback/formId provided');
   }
