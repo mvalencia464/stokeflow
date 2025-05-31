@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>External Embed Test - StokeFlow</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .description {
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 40px;
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .embed-code {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        .note {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 External Embed Test</h1>
+        <p class="description">
+            This page simulates embedding StokeFlow forms on external websites. 
+            It tests both the embed functionality and HighLevel CRM integration.
+        </p>
+        
+        <div class="note">
+            <strong>📋 What This Tests:</strong><br>
+            ✅ Simple data-stokeflow-form embed code<br>
+            ✅ HighLevel integration on external domains<br>
+            ✅ Field mapping for user-created forms<br>
+            ✅ Cross-domain configuration loading
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <div class="test-title">Test 1: HighLevel Test Form</div>
+            <div class="embed-code">&lt;div data-stokeflow-form="test-highlevel"&gt;&lt;/div&gt;
+&lt;script src="https://stokeflow.netlify.app/stokeflow-widget.js"&gt;&lt;/script&gt;</div>
+            
+            <div data-stokeflow-form="test-highlevel"></div>
+            <script src="https://stokeflow.netlify.app/stokeflow-widget.js"></script>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <div class="test-title">Test 2: Modern Lead Template</div>
+            <div class="embed-code">&lt;div data-stokeflow-form="modern-lead-template"&gt;&lt;/div&gt;
+&lt;script src="https://stokeflow.netlify.app/stokeflow-widget.js"&gt;&lt;/script&gt;</div>
+            
+            <div data-stokeflow-form="modern-lead-template"></div>
+            <script src="https://stokeflow.netlify.app/stokeflow-widget.js"></script>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="note success">
+            <strong>🎯 Testing Instructions:</strong><br>
+            1. Fill out the forms above with test data<br>
+            2. Check browser console for HighLevel sync messages<br>
+            3. Verify contacts appear in your HighLevel CRM<br>
+            4. Test with different field combinations
+        </div>
+    </div>
+
+    <script>
+        // Add some debugging
+        console.log('🧪 External embed test page loaded');
+        console.log('📍 Current domain:', window.location.hostname);
+        
+        // Listen for form submissions
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'stokeflow-form-submit') {
+                console.log('📝 Form submitted:', event.data);
+            }
+        });
+    </script>
+</body>
+</html>
