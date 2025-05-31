@@ -136,7 +136,7 @@ window.StokeFlowAPI = {
   // Get HighLevel configuration for widget embedding
   getHighLevelConfig: function() {
     try {
-      // Try to get from integration storage
+      // Try to get from integration storage first
       const integrationStorage = localStorage.getItem('integration-storage');
       if (integrationStorage) {
         const integrationStore = JSON.parse(integrationStorage);
@@ -150,6 +150,20 @@ window.StokeFlowAPI = {
             defaultWorkflowId: highlevelConfig.defaultWorkflowId
           };
         }
+      }
+
+      // Fallback to hardcoded values from .env (for external embedding)
+      // These values are from your .env file
+      const envToken = 'pit-07042cbb-2b38-4e74-9e2d-c8e1305177e7';
+      const envLocationId = 'BK5WOlszHMZB0udM7qC1';
+
+      if (envToken && envLocationId) {
+        console.log('📋 Using fallback HighLevel config for external embedding');
+        return {
+          enabled: true,
+          token: envToken,
+          locationId: envLocationId
+        };
       }
 
     } catch (error) {

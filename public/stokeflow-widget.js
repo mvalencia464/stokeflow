@@ -535,41 +535,35 @@
         customFields: []
       };
 
-      // Map common fields
+      // Map common fields by both field ID and question title
       Object.entries(this.formData).forEach(([key, value]) => {
         if (!value) return; // Skip empty values
 
-        switch (key.toLowerCase()) {
-          case 'name':
-          case 'fullname':
-          case 'full_name':
-            // Split full name into first and last
-            const nameParts = String(value).trim().split(' ');
-            data.firstName = nameParts[0] || 'Unknown';
-            data.lastName = nameParts.slice(1).join(' ') || 'User';
-            break;
-          case 'firstname':
-          case 'first_name':
-            data.firstName = String(value).trim();
-            break;
-          case 'lastname':
-          case 'last_name':
-            data.lastName = String(value).trim();
-            break;
-          case 'email':
-            data.email = String(value).trim();
-            break;
-          case 'phone':
-          case 'phonenumber':
-          case 'phone_number':
-            data.phone = String(value).trim();
-            break;
-          default:
-            // Add as custom field
-            data.customFields.push({
-              key: key.toLowerCase().replace(/\s+/g, '_'),
-              field_value: String(value)
-            });
+        // Get the question title for this field ID
+        const questionTitle = this.getQuestionTitle(key);
+        const fieldName = key.toLowerCase();
+        const titleName = questionTitle ? questionTitle.toLowerCase() : '';
+
+        // Check both field ID and question title for mapping
+        if (this.isNameField(fieldName, titleName)) {
+          // Split full name into first and last
+          const nameParts = String(value).trim().split(' ');
+          data.firstName = nameParts[0] || 'Unknown';
+          data.lastName = nameParts.slice(1).join(' ') || 'User';
+        } else if (this.isFirstNameField(fieldName, titleName)) {
+          data.firstName = String(value).trim();
+        } else if (this.isLastNameField(fieldName, titleName)) {
+          data.lastName = String(value).trim();
+        } else if (this.isEmailField(fieldName, titleName)) {
+          data.email = String(value).trim();
+        } else if (this.isPhoneField(fieldName, titleName)) {
+          data.phone = String(value).trim();
+        } else {
+          // Add as custom field
+          data.customFields.push({
+            key: (questionTitle || key).toLowerCase().replace(/\s+/g, '_'),
+            field_value: String(value)
+          });
         }
       });
 
@@ -592,6 +586,56 @@
 
       console.log('📋 Prepared HighLevel contact data:', data);
       return data;
+    }
+
+    // Get question title by field ID
+    getQuestionTitle(fieldId) {
+      if (!this.form || !this.form.steps) return null;
+
+      for (const step of this.form.steps) {
+        for (const question of step.questions) {
+          if (question.id === fieldId) {
+            return question.title;
+          }
+        }
+      }
+      return null;
+    }
+
+    // Field detection helpers
+    isNameField(fieldName, titleName) {
+      const namePatterns = ['name', 'fullname', 'full_name', 'full name'];
+      return namePatterns.some(pattern =>
+        fieldName.includes(pattern) || titleName.includes(pattern)
+      );
+    }
+
+    isFirstNameField(fieldName, titleName) {
+      const firstNamePatterns = ['firstname', 'first_name', 'first name'];
+      return firstNamePatterns.some(pattern =>
+        fieldName.includes(pattern) || titleName.includes(pattern)
+      );
+    }
+
+    isLastNameField(fieldName, titleName) {
+      const lastNamePatterns = ['lastname', 'last_name', 'last name'];
+      return lastNamePatterns.some(pattern =>
+        fieldName.includes(pattern) || titleName.includes(pattern)
+      );
+    }
+
+    isEmailField(fieldName, titleName) {
+      const emailPatterns = ['email', 'e-mail', 'email address'];
+      return emailPatterns.some(pattern =>
+        fieldName.includes(pattern) || titleName.includes(pattern)
+      );
+    }
+
+    isPhoneField(fieldName, titleName) {
+      const phonePatterns = ['phone', 'phonenumber', 'phone_number', 'phone number', 'mobile', 'cell'];
+      return phonePatterns.some(pattern =>
+        fieldName.includes(pattern) || titleName.includes(pattern)
+      );
     }
 
     renderError(message) {
