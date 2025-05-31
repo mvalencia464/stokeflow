@@ -10,6 +10,9 @@
   // Configuration
   const STOKEFLOW_API_BASE = 'https://stokeflow.netlify.app';
   
+  // Global widget registry
+  window.stokeFlowWidgets = window.stokeFlowWidgets || {};
+
   // Widget class
   class StokeFlowWidget {
     constructor(options) {
@@ -19,11 +22,15 @@
       this.onSubmit = options.onSubmit || null;
       this.onLoad = options.onLoad || null;
       this.theme = options.theme || {};
-      
+
       this.form = null;
       this.currentStep = 0;
       this.formData = {};
-      
+      this.widgetId = this.containerId + '_widget';
+
+      // Register this widget instance
+      window.stokeFlowWidgets[this.widgetId] = this;
+
       this.init();
     }
 
@@ -301,6 +308,7 @@
 
       const step = this.form.steps[this.currentStep];
       const progress = ((this.currentStep + 1) / this.form.steps.length) * 100;
+      const widgetId = this.containerId + '_widget';
 
       return `
         <div class="stokeflow-widget">
@@ -315,10 +323,10 @@
           </div>
           <div class="stokeflow-content">
             <h3 class="stokeflow-step-title">${step.title}</h3>
-            <form id="stokeflow-form">
+            <form id="stokeflow-form-${this.containerId}">
               ${step.questions.map(q => this.getQuestionHTML(q)).join('')}
               <div class="stokeflow-buttons">
-                ${this.currentStep > 0 ? '<button type="button" class="stokeflow-btn stokeflow-btn-secondary" onclick="stokeFlowWidget.previousStep()">Previous</button>' : '<div></div>'}
+                ${this.currentStep > 0 ? `<button type="button" class="stokeflow-btn stokeflow-btn-secondary" data-widget-id="${widgetId}" onclick="window.stokeFlowWidgets['${widgetId}'].previousStep()">Previous</button>` : '<div></div>'}
                 <button type="submit" class="stokeflow-btn stokeflow-btn-primary">
                   ${this.currentStep === this.form.steps.length - 1 ? 'Submit' : 'Next'}
                 </button>
@@ -388,7 +396,7 @@
     }
 
     attachEventListeners() {
-      const form = document.getElementById('stokeflow-form');
+      const form = document.getElementById(`stokeflow-form-${this.containerId}`);
       if (form) {
         form.addEventListener('submit', (e) => {
           e.preventDefault();
@@ -489,15 +497,12 @@
       const formId = element.getAttribute('data-stokeflow-form');
       const containerId = element.id || 'stokeflow-' + Math.random().toString(36).substr(2, 9);
       element.id = containerId;
-      
+
       new StokeFlowWidget({
         formId: formId,
         containerId: containerId
       });
     });
   });
-
-  // Store reference for button callbacks
-  window.stokeFlowWidget = null;
   
 })();
