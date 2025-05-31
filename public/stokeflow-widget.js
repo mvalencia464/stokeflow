@@ -104,11 +104,15 @@
     async tryLoadRealFormData() {
       return new Promise((resolve) => {
         try {
+          console.log('📋 Attempting to load real form data for ID:', this.formId);
+
           // Create a unique callback name
           const callbackName = 'stokeFlowCallback_' + Math.random().toString(36).substr(2, 9);
 
           // Create the callback function
           window[callbackName] = (formData) => {
+            console.log('📋 Callback executed with data:', formData ? 'Found' : 'Not found');
+
             if (formData) {
               console.log('📋 Loaded real form data via cross-domain API:', formData.name);
               this.form = formData;
@@ -126,9 +130,15 @@
 
           // Create script tag for JSONP-style call
           const script = document.createElement('script');
-          script.src = `${this.apiBase}/api/form-data.js?callback=${callbackName}&formId=${this.formId}`;
-          script.onerror = () => {
-            console.log('📋 Could not load real form data, will use generic form');
+          const apiUrl = `${this.apiBase}/api/form-data.js?callback=${callbackName}&formId=${this.formId}`;
+          console.log('📋 Loading form data from:', apiUrl);
+
+          script.src = apiUrl;
+          script.onload = () => {
+            console.log('📋 Form data script loaded successfully');
+          };
+          script.onerror = (error) => {
+            console.log('📋 Could not load real form data script, will use generic form', error);
             delete window[callbackName];
             resolve();
           };
@@ -143,7 +153,7 @@
               }
               resolve();
             }
-          }, 3000);
+          }, 5000); // Increased timeout to 5 seconds
 
           document.head.appendChild(script);
 
