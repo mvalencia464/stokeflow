@@ -68,8 +68,13 @@
           await this.loadFormsAPI();
         }
 
-        // Get form data from API
-        this.form = window.StokeFlowAPI.getForm(this.formId);
+        // Try to get real form data from StokeFlow API first
+        await this.tryLoadRealFormData();
+
+        // If we still don't have form data, use the API fallback
+        if (!this.form) {
+          this.form = window.StokeFlowAPI.getForm(this.formId);
+        }
 
         if (!this.form) {
           throw new Error(`Form with ID "${this.formId}" not found`);
@@ -93,6 +98,59 @@
         script.onload = () => resolve();
         script.onerror = () => reject(new Error('Failed to load forms API'));
         document.head.appendChild(script);
+      });
+    }
+
+    async tryLoadRealFormData() {
+      return new Promise((resolve) => {
+        try {
+          // Create a unique callback name
+          const callbackName = 'stokeFlowCallback_' + Math.random().toString(36).substr(2, 9);
+
+          // Create the callback function
+          window[callbackName] = (formData) => {
+            if (formData) {
+              console.log('📋 Loaded real form data via cross-domain API:', formData.name);
+              this.form = formData;
+            } else {
+              console.log('📋 No real form data found, will use generic form');
+            }
+
+            // Cleanup
+            delete window[callbackName];
+            if (script.parentNode) {
+              script.parentNode.removeChild(script);
+            }
+            resolve();
+          };
+
+          // Create script tag for JSONP-style call
+          const script = document.createElement('script');
+          script.src = `${this.apiBase}/api/form-data.js?callback=${callbackName}&formId=${this.formId}`;
+          script.onerror = () => {
+            console.log('📋 Could not load real form data, will use generic form');
+            delete window[callbackName];
+            resolve();
+          };
+
+          // Set timeout to avoid hanging
+          setTimeout(() => {
+            if (window[callbackName]) {
+              console.log('📋 Timeout loading real form data, will use generic form');
+              delete window[callbackName];
+              if (script.parentNode) {
+                script.parentNode.removeChild(script);
+              }
+              resolve();
+            }
+          }, 3000);
+
+          document.head.appendChild(script);
+
+        } catch (error) {
+          console.log('📋 Error trying to load real form data:', error.message);
+          resolve();
+        }
       });
     }
 
