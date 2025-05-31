@@ -15,47 +15,48 @@ window.StokeFlowFormData = function(callback, formId) {
 
     // Try to get form data from localStorage (this works when script is loaded from StokeFlow domain)
     try {
-      const storedData = localStorage.getItem('form-storage');
-      console.log('📋 Checking localStorage for form data...');
+      console.log('📋 Checking for exported forms first...');
 
-      if (storedData) {
-        const formStore = JSON.parse(storedData);
-        const form = formStore.state?.forms?.find(f => f.id === formId);
-
-        if (form) {
-          console.log('📋 Found form data for external embedding:', form.name);
-
-          // Convert to widget format with HighLevel config
-          formData = {
-            id: form.id,
-            name: form.name,
-            description: form.description || '',
-            steps: form.steps.map(step => ({
-              id: step.id,
-              title: step.title,
-              description: step.description || '',
-              questions: step.questions.map(question => ({
-                id: question.id,
-                type: question.type,
-                title: question.title,
-                required: question.required || false,
-                placeholder: question.placeholder || '',
-                choices: question.choices || []
-              }))
-            })),
-            settings: {
-              primaryColor: form.settings?.primaryColor || '#3B82F6',
-              showProgressBar: form.settings?.showProgressBar !== false,
-              thankYouMessage: form.settings?.thankYouMessage || 'Thank you for your submission!'
-            },
-            // Include HighLevel configuration
-            highlevelConfig: getHighLevelConfig()
-          };
-        } else {
-          console.log('📋 Form not found in localStorage for ID:', formId);
+      // First, try to get from exported forms (optimized for embedding)
+      const exportedForms = localStorage.getItem('exported-forms');
+      if (exportedForms) {
+        const forms = JSON.parse(exportedForms);
+        if (forms[formId]) {
+          console.log('📋 Found exported form data for external embedding:', forms[formId].name);
+          formData = forms[formId];
+          // Ensure HighLevel config is included
+          formData.highlevelConfig = getHighLevelConfig();
         }
-      } else {
-        console.log('📋 No form-storage found in localStorage');
+      }
+
+      // Only check live forms if we didn't find exported forms
+      if (!formData) {
+        console.log('📋 Checking localStorage for live form data...');
+
+        // Fallback: Try both possible localStorage keys for live forms
+        let storedData = localStorage.getItem('forms-storage'); // Zustand persist key
+        if (!storedData) {
+          storedData = localStorage.getItem('form-storage'); // Legacy key
+        }
+
+        if (storedData) {
+          const formStore = JSON.parse(storedData);
+          // Handle both Zustand format and legacy format
+          const forms = formStore.state?.forms || formStore.forms || [];
+          const form = forms.find(f => f.id === formId);
+
+          if (form) {
+            console.log('📋 Found live form data for external embedding:', form.name);
+
+            // Convert to widget format with HighLevel config
+            formData = convertFormToWidgetFormat(form);
+          } else {
+            console.log('📋 Form not found in localStorage for ID:', formId);
+            console.log('📋 Available form IDs:', forms.map(f => f.id));
+          }
+        } else {
+          console.log('📋 No forms-storage found in localStorage');
+        }
       }
     } catch (storageError) {
       console.log('📋 Could not access localStorage:', storageError.message);
@@ -116,6 +117,43 @@ function getHighLevelConfig() {
   }
 
   return { enabled: false };
+}
+
+// Convert StokeFlow form format to widget format
+function convertFormToWidgetFormat(form) {
+  return {
+    id: form.id,
+    name: form.name,
+    description: form.description || '',
+    steps: form.steps.map(step => ({
+      id: step.id,
+      title: step.title,
+      description: step.description || '',
+      questions: step.questions.map(question => ({
+        id: question.id,
+        type: question.type,
+        title: question.title,
+        required: question.required || false,
+        placeholder: question.placeholder || '',
+        helpText: question.helpText || '',
+        choices: question.choices ? question.choices.map(choice => ({
+          id: choice.id,
+          value: choice.value || choice.label,
+          label: choice.label,
+          image: choice.imageUrl || choice.image
+        })) : []
+      }))
+    })),
+    settings: {
+      primaryColor: form.settings?.primaryColor || '#3B82F6',
+      showProgressBar: form.settings?.showProgressBar !== false,
+      thankYouMessage: form.settings?.thankYouMessage || 'Thank you for your submission!',
+      logoUrl: form.settings?.logoUrl,
+      redirectUrl: form.settings?.redirectUrl
+    },
+    // Include HighLevel configuration
+    highlevelConfig: getHighLevelConfig()
+  };
 }
 
 // Get hardcoded form data for known form IDs
