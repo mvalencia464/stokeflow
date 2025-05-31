@@ -45,16 +45,43 @@ After deployment, you'll have:
 
 ## 📱 Embedding Forms on Websites
 
-### Option 1: iframe Embed
+### Option 1: Simple iframe Embed
 
 ```html
-<iframe 
-  src="https://your-site.netlify.app/form/your-form-id" 
-  width="100%" 
+<iframe
+  src="https://your-site.netlify.app/form/your-form-id"
+  width="100%"
   height="600"
   frameborder="0"
-  style="border: none; border-radius: 8px;">
+  style="border: none; border-radius: 8px;"
+>
 </iframe>
+```
+
+### Option 1b: Responsive iframe (Recommended)
+
+```html
+<iframe
+  id="stokeflow-form"
+  src="https://your-site.netlify.app/form/your-form-id"
+  width="100%"
+  height="600"
+  frameborder="0"
+  style="border: none; border-radius: 8px;"
+>
+</iframe>
+
+<script>
+  // Auto-resize iframe based on content
+  window.addEventListener("message", function (event) {
+    if (event.data.type === "resize") {
+      const iframe = document.getElementById("stokeflow-form");
+      if (iframe) {
+        iframe.style.height = event.data.height + "px";
+      }
+    }
+  });
+</script>
 ```
 
 ### Option 2: JavaScript Embed (Advanced)
@@ -62,15 +89,15 @@ After deployment, you'll have:
 ```html
 <div id="stokeflow-form"></div>
 <script>
-  (function() {
-    var iframe = document.createElement('iframe');
-    iframe.src = 'https://your-site.netlify.app/form/your-form-id';
-    iframe.width = '100%';
-    iframe.height = '600';
-    iframe.frameBorder = '0';
-    iframe.style.border = 'none';
-    iframe.style.borderRadius = '8px';
-    document.getElementById('stokeflow-form').appendChild(iframe);
+  (function () {
+    var iframe = document.createElement("iframe");
+    iframe.src = "https://your-site.netlify.app/form/your-form-id";
+    iframe.width = "100%";
+    iframe.height = "600";
+    iframe.frameBorder = "0";
+    iframe.style.border = "none";
+    iframe.style.borderRadius = "8px";
+    document.getElementById("stokeflow-form").appendChild(iframe);
   })();
 </script>
 ```
@@ -81,28 +108,28 @@ After deployment, you'll have:
 <button onclick="openStokeFlowForm()">Get Quote</button>
 
 <script>
-function openStokeFlowForm() {
-  var modal = document.createElement('div');
-  modal.style.cssText = `
+  function openStokeFlowForm() {
+    var modal = document.createElement("div");
+    modal.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.8); z-index: 10000; display: flex;
     align-items: center; justify-content: center;
   `;
-  
-  var iframe = document.createElement('iframe');
-  iframe.src = 'https://your-site.netlify.app/form/your-form-id';
-  iframe.style.cssText = `
+
+    var iframe = document.createElement("iframe");
+    iframe.src = "https://your-site.netlify.app/form/your-form-id";
+    iframe.style.cssText = `
     width: 90%; max-width: 800px; height: 90%; max-height: 600px;
     border: none; border-radius: 12px; background: white;
   `;
-  
-  modal.appendChild(iframe);
-  modal.onclick = function(e) {
-    if (e.target === modal) document.body.removeChild(modal);
-  };
-  
-  document.body.appendChild(modal);
-}
+
+    modal.appendChild(iframe);
+    modal.onclick = function (e) {
+      if (e.target === modal) document.body.removeChild(modal);
+    };
+
+    document.body.appendChild(modal);
+  }
 </script>
 ```
 
@@ -133,21 +160,25 @@ Analytics work out of the box! To enhance:
 ## 🛠️ Troubleshooting
 
 ### Build Fails
+
 - Check Node version is 18+
 - Verify all dependencies are in package.json
 - Check for TypeScript errors
 
 ### Forms Not Loading
+
 - Verify the form ID in the URL
 - Check browser console for errors
 - Ensure the form is published
 
 ### HighLevel Integration Issues
+
 - Verify token has correct permissions
 - Check location ID is correct
 - Test with a simple contact form first
 
 ### Analytics Not Tracking
+
 - Check localStorage is enabled
 - Verify analytics events in browser dev tools
 - Clear browser cache and test again
@@ -155,16 +186,19 @@ Analytics work out of the box! To enhance:
 ## 📊 Monitoring & Maintenance
 
 ### Performance Monitoring
+
 - Use Netlify Analytics for traffic insights
 - Monitor Core Web Vitals in Google Search Console
 - Set up uptime monitoring (UptimeRobot, etc.)
 
 ### Regular Updates
+
 - Update dependencies monthly: `npm update`
 - Monitor for security vulnerabilities: `npm audit`
 - Test forms regularly to ensure functionality
 
 ### Backup Strategy
+
 - GitHub serves as code backup
 - Export form data regularly from dashboard
 - Document any custom configurations

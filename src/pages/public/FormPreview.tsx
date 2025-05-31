@@ -27,6 +27,32 @@ const FormPreview = () => {
       }
     }, 500);
 
+    // Add iframe-friendly styling when embedded
+    const isInIframe = window.self !== window.top;
+    if (isInIframe) {
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      document.body.style.overflow = 'auto';
+
+      // Send height updates to parent window for responsive iframe
+      const sendHeightUpdate = () => {
+        const height = document.documentElement.scrollHeight;
+        window.parent.postMessage({ type: 'resize', height }, '*');
+      };
+
+      // Initial height update
+      setTimeout(sendHeightUpdate, 100);
+
+      // Update height when content changes
+      const observer = new ResizeObserver(sendHeightUpdate);
+      observer.observe(document.body);
+
+      return () => {
+        clearTimeout(timer);
+        observer.disconnect();
+      };
+    }
+
     return () => clearTimeout(timer);
   }, [form, formId, trackFormView]);
   

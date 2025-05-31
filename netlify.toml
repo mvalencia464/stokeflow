@@ -11,7 +11,25 @@
   to = "/index.html"
   status = 200
 
-# Security headers
+# Security headers for dashboard (restrict embedding)
+[[headers]]
+  for = "/dashboard/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Security headers for forms (allow embedding)
+[[headers]]
+  for = "/form/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "frame-ancestors *;"
+
+# Security headers for other pages
 [[headers]]
   for = "/*"
   [headers.values]
