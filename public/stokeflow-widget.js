@@ -468,7 +468,8 @@
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${hlToken}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Version': '2021-07-28'
           },
           body: JSON.stringify({
             ...contactData,
