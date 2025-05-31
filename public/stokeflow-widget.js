@@ -49,6 +49,20 @@
 
     async loadForm() {
       try {
+        // Check if form data was provided directly in options
+        if (this.options.formData) {
+          this.form = this.options.formData;
+          console.log('Using provided form data:', this.form.name);
+          return;
+        }
+
+        // Check for shared forms (from URL parameters)
+        if (window.StokeFlowSharedForms && window.StokeFlowSharedForms[this.formId]) {
+          this.form = window.StokeFlowSharedForms[this.formId];
+          console.log('Using shared form data:', this.form.name);
+          return;
+        }
+
         // Load the forms API if not already loaded
         if (!window.StokeFlowAPI) {
           await this.loadFormsAPI();

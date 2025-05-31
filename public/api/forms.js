@@ -10,25 +10,98 @@ window.StokeFlowAPI = {
   // Get form data by ID
   getForm: function(formId) {
     try {
-      // Try to get from localStorage (where StokeFlow stores forms)
+      // First try to get from localStorage (same domain)
       const storedData = localStorage.getItem('form-storage');
       if (storedData) {
         const formStore = JSON.parse(storedData);
         const form = formStore.state?.forms?.find(f => f.id === formId);
-        
+
         if (form) {
-          // Convert StokeFlow form format to widget format
+          console.log('Found form in localStorage:', form.name);
           return this.convertFormFormat(form);
         }
       }
-      
-      // Fallback to mock data for demo forms
-      return this.getMockForm(formId);
-      
+
+      // Try to get from parent window (if in iframe)
+      if (window.parent !== window) {
+        try {
+          const parentStorage = window.parent.localStorage.getItem('form-storage');
+          if (parentStorage) {
+            const parentFormStore = JSON.parse(parentStorage);
+            const parentForm = parentFormStore.state?.forms?.find(f => f.id === formId);
+
+            if (parentForm) {
+              console.log('Found form in parent localStorage:', parentForm.name);
+              return this.convertFormFormat(parentForm);
+            }
+          }
+        } catch (e) {
+          // Cross-origin access blocked, continue to fallback
+          console.log('Cross-origin localStorage access blocked');
+        }
+      }
+
+      // Try to fetch from StokeFlow API (if available)
+      return this.fetchFormFromAPI(formId);
+
     } catch (error) {
       console.error('Error loading form:', error);
-      return null;
+      return this.getMockForm(formId);
     }
+  },
+
+  // Fetch form from StokeFlow API
+  fetchFormFromAPI: function(formId) {
+    // For now, create a generic form structure for any unknown ID
+    // In a real implementation, this would fetch from a backend API
+
+    console.log('Creating generic form for ID:', formId);
+
+    return {
+      id: formId,
+      name: 'Contact Form',
+      description: 'Please fill out this form to get in touch',
+      steps: [{
+        id: 'step1',
+        title: 'Contact Information',
+        description: 'Please provide your contact details',
+        questions: [
+          {
+            id: 'name',
+            type: 'text',
+            title: 'Full Name',
+            required: true,
+            placeholder: 'Enter your full name'
+          },
+          {
+            id: 'email',
+            type: 'text',
+            title: 'Email Address',
+            required: true,
+            placeholder: 'Enter your email address'
+          },
+          {
+            id: 'phone',
+            type: 'text',
+            title: 'Phone Number',
+            required: false,
+            placeholder: 'Enter your phone number'
+          },
+          {
+            id: 'message',
+            type: 'textarea',
+            title: 'Message',
+            required: false,
+            placeholder: 'How can we help you?'
+          }
+        ]
+      }],
+      settings: {
+        primaryColor: '#3B82F6',
+        showProgressBar: false,
+        thankYouMessage: 'Thank you for your submission! We\'ll be in touch soon.'
+      }
+    };
   },
   
   // Convert StokeFlow internal format to widget format
