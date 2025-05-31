@@ -463,8 +463,24 @@
   window.StokeFlow = {
     create: function(options) {
       return new StokeFlowWidget(options);
+    },
+    ready: function(callback) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', callback);
+      } else {
+        callback();
+      }
     }
   };
+
+  // Mark as loaded
+  window.StokeFlowLoaded = true;
+
+  // Trigger ready event for any waiting scripts
+  if (window.StokeFlowReadyCallbacks) {
+    window.StokeFlowReadyCallbacks.forEach(callback => callback());
+    window.StokeFlowReadyCallbacks = [];
+  }
 
   // Auto-initialize if data attributes are present
   document.addEventListener('DOMContentLoaded', function() {

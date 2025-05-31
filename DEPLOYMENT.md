@@ -84,21 +84,35 @@ After deployment, you'll have:
 </script>
 ```
 
-### Option 2: JavaScript Embed (Advanced)
+### Option 2: Native JavaScript Embed (Recommended)
+
+**Method A: Auto-Initialize (Simplest)**
 
 ```html
-<div id="stokeflow-form"></div>
+<div data-stokeflow-form="your-form-id"></div>
+<script src="https://your-site.netlify.app/stokeflow-widget.js"></script>
+```
+
+**Method B: Manual Initialize (More Control)**
+
+```html
+<div id="my-form"></div>
+<script src="https://your-site.netlify.app/stokeflow-widget.js"></script>
 <script>
-  (function () {
-    var iframe = document.createElement("iframe");
-    iframe.src = "https://your-site.netlify.app/form/your-form-id";
-    iframe.width = "100%";
-    iframe.height = "600";
-    iframe.frameBorder = "0";
-    iframe.style.border = "none";
-    iframe.style.borderRadius = "8px";
-    document.getElementById("stokeflow-form").appendChild(iframe);
-  })();
+  // Wait for StokeFlow to load, then create widget
+  StokeFlow.ready(function () {
+    const widget = StokeFlow.create({
+      formId: "your-form-id",
+      containerId: "my-form",
+      onSubmit: function (data) {
+        console.log("Form submitted:", data);
+        // Handle form submission
+      },
+      theme: {
+        primaryColor: "#10B981",
+      },
+    });
+  });
 </script>
 ```
 
