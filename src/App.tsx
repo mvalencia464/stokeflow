@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import AuthLayout from './layouts/AuthLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 import PublicLayout from './layouts/PublicLayout';
+import AppInitializer from './components/AppInitializer';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -31,7 +32,9 @@ function App() {
   const { isAuthenticated } = useAuthStore();
 
   return (
-    <Routes>
+    <>
+      <AppInitializer />
+      <Routes>
       {/* Public Routes */}
       <Route path="/" element={<PublicLayout />}>
         <Route index element={<Home />} />
@@ -68,7 +71,8 @@ function App() {
 
       {/* 404 Route */}
       <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }
 

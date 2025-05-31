@@ -497,6 +497,7 @@
       // Try multiple sources for the token
       return this.options?.highLevelToken ||
              window.STOKEFLOW_HIGHLEVEL_TOKEN ||
+             this.getFromStokeFlowConfig('privateIntegrationToken') ||
              localStorage.getItem('stokeflow_hl_token');
     }
 
@@ -504,7 +505,27 @@
       // Try multiple sources for the location ID
       return this.options?.highLevelLocationId ||
              window.STOKEFLOW_HIGHLEVEL_LOCATION_ID ||
+             this.getFromStokeFlowConfig('locationId') ||
              localStorage.getItem('stokeflow_hl_location_id');
+    }
+
+    getFromStokeFlowConfig(key) {
+      try {
+        // Try to get from StokeFlow integration store (same domain)
+        const integrationStorage = localStorage.getItem('integration-storage');
+        if (integrationStorage) {
+          const integrationStore = JSON.parse(integrationStorage);
+          const highlevelConfig = integrationStore.state?.highlevel;
+
+          if (highlevelConfig?.enabled && highlevelConfig[key]) {
+            console.log(`📋 Found ${key} from StokeFlow integration config`);
+            return highlevelConfig[key];
+          }
+        }
+      } catch (error) {
+        console.log('Could not access StokeFlow integration config:', error.message);
+      }
+      return null;
     }
 
     prepareHighLevelData() {
