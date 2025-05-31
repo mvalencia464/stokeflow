@@ -9,6 +9,46 @@ import {
 import { useFormStore } from '../../stores/formStore';
 import { useLeadsStore } from '../../stores/leadsStore';
 
+// Helper functions to extract lead information
+const getLeadName = (data: Record<string, any>): string => {
+  const nameFields = [
+    'Full Name', 'full name', 'name', 'Name',
+    'fullname', 'fullName', 'full_name',
+    'What is your full name?', 'Your Name'
+  ];
+
+  for (const field of nameFields) {
+    if (data[field] && typeof data[field] === 'string' && data[field].trim()) {
+      return data[field].trim();
+    }
+  }
+
+  const firstName = data['firstName'] || data['first_name'] || data['First Name'];
+  const lastName = data['lastName'] || data['last_name'] || data['Last Name'];
+
+  if (firstName || lastName) {
+    return `${firstName || ''} ${lastName || ''}`.trim();
+  }
+
+  return 'Anonymous User';
+};
+
+const getLeadEmail = (data: Record<string, any>): string => {
+  const emailFields = [
+    'Email Address', 'email address', 'email', 'Email',
+    'emailAddress', 'email_address', 'Email_Address',
+    'What is your email?', 'Your Email', 'Contact Email'
+  ];
+
+  for (const field of emailFields) {
+    if (data[field] && typeof data[field] === 'string' && data[field].includes('@')) {
+      return data[field].trim();
+    }
+  }
+
+  return 'No email provided';
+};
+
 const Dashboard = () => {
   const { forms } = useFormStore();
   const { leads } = useLeadsStore();
@@ -138,14 +178,14 @@ const Dashboard = () => {
                 <div key={lead.id} className="p-6 hover:bg-slate-50">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-medium text-slate-900">
-                      {lead.data['Full Name'] || 'Anonymous User'}
+                      {getLeadName(lead.data)}
                     </h3>
                     <span className="text-xs text-slate-500">
                       {lead.submittedAt.toLocaleDateString()}
                     </span>
                   </div>
                   <p className="text-sm text-slate-500 mb-2">
-                    {lead.data['Email Address'] || 'No email provided'}
+                    {getLeadEmail(lead.data)}
                   </p>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
                     {lead.formName}

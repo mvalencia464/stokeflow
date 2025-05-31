@@ -80,20 +80,33 @@ export const useIntegrationStore = create<IntegrationState>()(
 
       // Extract name parts - try multiple field name variations
       let firstName = '', lastName = '';
-      const fullName = findFieldValue(['Full Name', 'fullName', 'full_name', 'name']);
+      const fullName = findFieldValue([
+        'Full Name', 'fullName', 'full_name', 'name', 'Name',
+        'What is your full name?', 'Your Name', 'Contact Name'
+      ]);
       if (fullName) {
-        const nameParts = fullName.split(' ');
+        const nameParts = String(fullName).trim().split(' ');
         firstName = nameParts[0] || '';
         lastName = nameParts.slice(1).join(' ') || '';
       }
 
       // Override with specific first/last name fields if available
-      firstName = findFieldValue(['First Name', 'firstName', 'first_name']) || firstName;
-      lastName = findFieldValue(['Last Name', 'lastName', 'last_name']) || lastName;
+      firstName = findFieldValue([
+        'First Name', 'firstName', 'first_name', 'firstname', 'FirstName'
+      ]) || firstName;
+      lastName = findFieldValue([
+        'Last Name', 'lastName', 'last_name', 'lastname', 'LastName'
+      ]) || lastName;
 
       // Find email and phone with multiple variations
-      const email = findFieldValue(['Email Address', 'Email', 'email', 'emailAddress', 'email_address']);
-      const phone = findFieldValue(['Phone Number', 'Phone', 'phone', 'phoneNumber', 'phone_number']);
+      const email = findFieldValue([
+        'Email Address', 'Email', 'email', 'emailAddress', 'email_address',
+        'What is your email?', 'Your Email', 'Contact Email', 'E-mail'
+      ]);
+      const phone = findFieldValue([
+        'Phone Number', 'Phone', 'phone', 'phoneNumber', 'phone_number',
+        'What is your phone number?', 'Your Phone', 'Contact Phone', 'Mobile'
+      ]);
 
       // Validate email format
       const isValidEmail = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);

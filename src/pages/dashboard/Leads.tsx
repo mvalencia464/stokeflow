@@ -10,6 +10,49 @@ import {
 import { useLeadsStore, Lead } from '../../stores/leadsStore';
 import { useFormStore } from '../../stores/formStore';
 
+// Helper functions to extract lead information
+const getLeadName = (data: Record<string, any>): string => {
+  // Try various field names for name
+  const nameFields = [
+    'Full Name', 'full name', 'name', 'Name',
+    'fullname', 'fullName', 'full_name',
+    'What is your full name?', 'Your Name'
+  ];
+
+  for (const field of nameFields) {
+    if (data[field] && typeof data[field] === 'string' && data[field].trim()) {
+      return data[field].trim();
+    }
+  }
+
+  // Try first name + last name
+  const firstName = data['firstName'] || data['first_name'] || data['First Name'];
+  const lastName = data['lastName'] || data['last_name'] || data['Last Name'];
+
+  if (firstName || lastName) {
+    return `${firstName || ''} ${lastName || ''}`.trim();
+  }
+
+  return 'Anonymous User';
+};
+
+const getLeadEmail = (data: Record<string, any>): string => {
+  // Try various field names for email
+  const emailFields = [
+    'Email Address', 'email address', 'email', 'Email',
+    'emailAddress', 'email_address', 'Email_Address',
+    'What is your email?', 'Your Email', 'Contact Email'
+  ];
+
+  for (const field of emailFields) {
+    if (data[field] && typeof data[field] === 'string' && data[field].includes('@')) {
+      return data[field].trim();
+    }
+  }
+
+  return 'No email provided';
+};
+
 const Leads = () => {
   const { leads, deleteLead } = useLeadsStore();
   const { forms } = useFormStore();
@@ -116,10 +159,10 @@ const Leads = () => {
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="font-medium text-slate-900">
-                        {lead.data['Full Name'] || 'Anonymous User'}
+                        {getLeadName(lead.data)}
                       </div>
                       <div className="text-sm text-slate-500">
-                        {lead.data['Email Address'] || 'No email provided'}
+                        {getLeadEmail(lead.data)}
                       </div>
                       <div className="mt-1 text-xs inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
                         {lead.formName}
