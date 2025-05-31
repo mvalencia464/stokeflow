@@ -32,25 +32,18 @@ const EmbedInstructions = () => {
   
   const getEmbedCode = () => {
     const baseUrl = window.location.origin;
-    
+
     if (activeTab === 'iframe') {
-      return `<iframe 
-  src="${baseUrl}/form/${formId}" 
-  width="100%" 
-  height="600" 
-  style="border: none; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" 
+      return `<iframe
+  src="${baseUrl}/form/${formId}"
+  width="100%"
+  height="600"
+  style="border: none; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"
   title="${form.name}"
 ></iframe>`;
     } else {
-      return `<script>
-  (function(w,d,s,o,f,js,fjs){
-    w['LeadFlow']=o;w[o]=w[o]||function(){(w[o].q=w[o].q||[]).push(arguments)};
-    w[o].l=1*new Date();js=d.createElement(s);fjs=d.getElementsByTagName(s)[0];
-    js.async=1;js.src=f;fjs.parentNode.insertBefore(js,fjs);
-  }(window,document,'script','leadFlow','${baseUrl}/embed.js'));
-  leadFlow('init', '${formId}');
-</script>
-<div id="leadflow-form-${formId}"></div>`;
+      return `<div data-stokeflow-form="${formId}"></div>
+<script src="https://stokeflow.netlify.app/stokeflow-widget.js"></script>`;
     }
   };
   

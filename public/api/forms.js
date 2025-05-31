@@ -127,8 +127,36 @@ window.StokeFlowAPI = {
         primaryColor: stokeFlowForm.settings?.primaryColor || '#3B82F6',
         showProgressBar: stokeFlowForm.settings?.showProgressBar !== false,
         thankYouMessage: stokeFlowForm.settings?.thankYouMessage || 'Thank you for your submission!'
-      }
+      },
+      // Include HighLevel configuration for widget
+      highlevelConfig: this.getHighLevelConfig()
     };
+  },
+
+  // Get HighLevel configuration for widget embedding
+  getHighLevelConfig: function() {
+    try {
+      // Try to get from integration storage
+      const integrationStorage = localStorage.getItem('integration-storage');
+      if (integrationStorage) {
+        const integrationStore = JSON.parse(integrationStorage);
+        const highlevelConfig = integrationStore.state?.highlevel;
+
+        if (highlevelConfig?.enabled) {
+          return {
+            enabled: true,
+            token: highlevelConfig.privateIntegrationToken,
+            locationId: highlevelConfig.locationId,
+            defaultWorkflowId: highlevelConfig.defaultWorkflowId
+          };
+        }
+      }
+
+    } catch (error) {
+      console.log('Could not load HighLevel config:', error.message);
+    }
+
+    return { enabled: false };
   },
   
   // Mock data for demo forms
@@ -177,7 +205,8 @@ window.StokeFlowAPI = {
           primaryColor: '#3B82F6',
           showProgressBar: false,
           thankYouMessage: 'Thank you! We\'ll be in touch soon.'
-        }
+        },
+        highlevelConfig: this.getHighLevelConfig()
       },
       'modern-lead-template': {
         id: 'modern-lead-template',
@@ -215,7 +244,8 @@ window.StokeFlowAPI = {
           primaryColor: '#10B981',
           showProgressBar: true,
           thankYouMessage: 'Thank you! We\'ll contact you within 24 hours.'
-        }
+        },
+        highlevelConfig: this.getHighLevelConfig()
       }
     };
 

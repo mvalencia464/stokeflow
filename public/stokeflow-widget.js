@@ -497,6 +497,7 @@
       // Try multiple sources for the token
       return this.options?.highLevelToken ||
              window.STOKEFLOW_HIGHLEVEL_TOKEN ||
+             this.form?.highlevelConfig?.token ||
              this.getFromStokeFlowConfig('privateIntegrationToken') ||
              localStorage.getItem('stokeflow_hl_token');
     }
@@ -505,6 +506,7 @@
       // Try multiple sources for the location ID
       return this.options?.highLevelLocationId ||
              window.STOKEFLOW_HIGHLEVEL_LOCATION_ID ||
+             this.form?.highlevelConfig?.locationId ||
              this.getFromStokeFlowConfig('locationId') ||
              localStorage.getItem('stokeflow_hl_location_id');
     }
