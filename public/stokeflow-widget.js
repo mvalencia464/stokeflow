@@ -22,6 +22,7 @@
       this.onSubmit = options.onSubmit || null;
       this.onLoad = options.onLoad || null;
       this.theme = options.theme || {};
+      this.options = options; // Store all options for HighLevel integration
 
       this.form = null;
       this.currentStep = 0;
@@ -47,71 +48,38 @@
     }
 
     async loadForm() {
-      // In a real implementation, this would fetch from an API
-      // For now, we'll use the mock data structure
-      const mockForms = {
-        'test-highlevel': {
-          id: 'test-highlevel',
-          name: 'Contact Form',
-          description: 'Get in touch with us',
-          steps: [{
-            id: 's1',
-            title: 'Contact Information',
-            questions: [
-              { id: 'name', type: 'text', title: 'Full Name', required: true, placeholder: 'John Doe' },
-              { id: 'email', type: 'text', title: 'Email Address', required: true, placeholder: 'john@example.com' },
-              { id: 'phone', type: 'text', title: 'Phone Number', required: true, placeholder: '+1 (555) 123-4567' },
-              { id: 'message', type: 'textarea', title: 'Message', required: false, placeholder: 'How can we help you?' }
-            ]
-          }],
-          settings: {
-            primaryColor: '#3B82F6',
-            showProgressBar: false,
-            thankYouMessage: 'Thank you! We\'ll be in touch soon.'
-          }
-        },
-        'modern-lead-template': {
-          id: 'modern-lead-template',
-          name: 'Service Quote Request',
-          description: 'Get a personalized quote for our services',
-          steps: [
-            {
-              id: 'step1',
-              title: 'Service Type',
-              questions: [{
-                id: 'service',
-                type: 'radio',
-                title: 'What service do you need?',
-                required: true,
-                choices: [
-                  { id: 'moving', value: 'moving', label: 'Moving Services' },
-                  { id: 'storage', value: 'storage', label: 'Storage Solutions' },
-                  { id: 'packing', value: 'packing', label: 'Packing Services' }
-                ]
-              }]
-            },
-            {
-              id: 'step2',
-              title: 'Contact Details',
-              questions: [
-                { id: 'name', type: 'text', title: 'Full Name', required: true, placeholder: 'John Doe' },
-                { id: 'email', type: 'text', title: 'Email Address', required: true, placeholder: 'john@example.com' },
-                { id: 'phone', type: 'text', title: 'Phone Number', required: true, placeholder: '+1 (555) 123-4567' }
-              ]
-            }
-          ],
-          settings: {
-            primaryColor: '#10B981',
-            showProgressBar: true,
-            thankYouMessage: 'Thank you! We\'ll contact you within 24 hours.'
-          }
+      try {
+        // Load the forms API if not already loaded
+        if (!window.StokeFlowAPI) {
+          await this.loadFormsAPI();
         }
-      };
 
-      this.form = mockForms[this.formId];
-      if (!this.form) {
-        throw new Error(`Form with ID "${this.formId}" not found`);
+        // Get form data from API
+        this.form = window.StokeFlowAPI.getForm(this.formId);
+
+        if (!this.form) {
+          throw new Error(`Form with ID "${this.formId}" not found`);
+        }
+
+      } catch (error) {
+        console.error('Error loading form:', error);
+        throw error;
       }
+    }
+
+    async loadFormsAPI() {
+      return new Promise((resolve, reject) => {
+        if (window.StokeFlowAPI) {
+          resolve();
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = this.apiBase + '/api/forms.js';
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load forms API'));
+        document.head.appendChild(script);
+      });
     }
 
     async loadStyles() {
@@ -438,19 +406,128 @@
     async submitForm() {
       try {
         console.log('Form submitted:', this.formData);
-        
+
+        // Submit to StokeFlow API
+        if (window.StokeFlowAPI) {
+          await window.StokeFlowAPI.submitForm(this.formId, this.formData);
+        }
+
+        // Submit to HighLevel if configured
+        await this.submitToHighLevel();
+
+        // Call custom onSubmit handler
         if (this.onSubmit) {
           await this.onSubmit(this.formData);
         }
-        
+
         // Show success
         this.currentStep = this.form.steps.length;
         this.render();
-        
+
       } catch (error) {
         console.error('Submission error:', error);
         alert('There was an error submitting the form. Please try again.');
       }
+    }
+
+    async submitToHighLevel() {
+      try {
+        // Check if HighLevel integration is configured
+        const hlToken = this.getHighLevelToken();
+        const hlLocationId = this.getHighLevelLocationId();
+
+        if (!hlToken || !hlLocationId) {
+          console.log('HighLevel integration not configured');
+          return;
+        }
+
+        // Prepare contact data for HighLevel
+        const contactData = this.prepareHighLevelData();
+
+        if (!contactData.email && !contactData.phone) {
+          console.log('No email or phone provided - skipping HighLevel sync');
+          return;
+        }
+
+        // Submit to HighLevel
+        const response = await fetch('https://rest.gohighlevel.com/v1/contacts/', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${hlToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ...contactData,
+            locationId: hlLocationId,
+            source: 'StokeFlow Form'
+          })
+        });
+
+        if (response.ok) {
+          console.log('Successfully synced to HighLevel');
+        } else {
+          console.error('HighLevel sync failed:', response.statusText);
+        }
+
+      } catch (error) {
+        console.error('HighLevel integration error:', error);
+        // Don't fail the form submission if HighLevel sync fails
+      }
+    }
+
+    getHighLevelToken() {
+      // Try multiple sources for the token
+      return this.options?.highLevelToken ||
+             window.STOKEFLOW_HIGHLEVEL_TOKEN ||
+             localStorage.getItem('stokeflow_hl_token');
+    }
+
+    getHighLevelLocationId() {
+      // Try multiple sources for the location ID
+      return this.options?.highLevelLocationId ||
+             window.STOKEFLOW_HIGHLEVEL_LOCATION_ID ||
+             localStorage.getItem('stokeflow_hl_location_id');
+    }
+
+    prepareHighLevelData() {
+      const data = {
+        customFields: []
+      };
+
+      // Map common fields
+      Object.entries(this.formData).forEach(([key, value]) => {
+        switch (key.toLowerCase()) {
+          case 'name':
+          case 'fullname':
+          case 'full_name':
+            data.name = value;
+            break;
+          case 'firstname':
+          case 'first_name':
+            data.firstName = value;
+            break;
+          case 'lastname':
+          case 'last_name':
+            data.lastName = value;
+            break;
+          case 'email':
+            data.email = value;
+            break;
+          case 'phone':
+          case 'phonenumber':
+          case 'phone_number':
+            data.phone = value;
+            break;
+          default:
+            // Add as custom field
+            data.customFields.push({
+              key: key,
+              field_value: value
+            });
+        }
+      });
+
+      return data;
     }
 
     renderError(message) {
