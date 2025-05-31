@@ -100,7 +100,9 @@ window.StokeFlowAPI = {
         primaryColor: '#3B82F6',
         showProgressBar: false,
         thankYouMessage: 'Thank you for your submission! We\'ll be in touch soon.'
-      }
+      },
+      // Include HighLevel configuration for generic forms too
+      highlevelConfig: this.getHighLevelConfig()
     };
   },
   
